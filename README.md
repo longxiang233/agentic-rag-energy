@@ -22,19 +22,19 @@
 
 ```mermaid
 flowchart TD
-    U[用户请求] --> API[API层: FastAPI POST /chat]
-    API --> AG[Agent层: LangGraph 图结构循环]
+    U["用户请求"] --> API["API层: FastAPI POST /chat"]
+    API --> AG["Agent层: LangGraph 图结构循环"]
     
-    AG -->|意图路由| T1[Tool层: policy_search]
-    AG -->|意图路由| T2[Tool层: price_query]
-    AG -->|意图路由| T3[Tool层: vector_search]
+    AG -->|"意图路由"| T1["Tool层: policy_search"]
+    AG -->|"意图路由"| T2["Tool层: price_query"]
+    AG -->|"意图路由"| T3["Tool层: vector_search"]
     
-    T1 --> RAG[RAG层: FAISS 检索 + 阈值过滤 + 引用溯源]
-    T2 --> DB[结构化数据: PRICE_DATA 字典]
+    T1 --> RAG["RAG层: FAISS 检索 + 阈值过滤 + 引用溯源"]
+    T2 --> DB["结构化数据: PRICE_DATA 字典"]
     T3 --> RAG
     
-    AG --> M[Memory层: session_id -> 历史消息列表]
-    AG --> L[日志层: logs/agent.log 记录耗时和状态]
+    AG --> M["Memory层: session_id -> 历史消息列表"]
+    AG --> L["日志层: logs/agent.log 记录耗时和状态"]
 ```
 
 ## 💻 怎么跑
