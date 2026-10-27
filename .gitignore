@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv312/
+venv/
+.pytest_cache/
+
+# 环境变量
+.env
+
+# 数据库/日志
+rag/faiss_db/
+logs/
+
+# 系统文件
+.DS_Store
+Thumbs.db
