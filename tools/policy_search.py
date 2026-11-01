@@ -1,11 +1,13 @@
 import time
 from langchain_core.tools import tool
 from rag_bridge import get_rag_engine
-from tools.error_handler import make_failure_response, is_empty_result, log_tool_call
+from tools.error_handler import ToolErrorHandler
 
 SCORE_THRESHOLD = 1.02
 _last_citations = []   # list[dict]，每次调用前清空
 _last_status = "ok"    # 本次调用的原始状态
+
+error_handler = ToolErrorHandler(max_retries=2)
 
 @tool
 def policy_search(query:str, top_k:int = 5) -> str:
@@ -22,7 +24,7 @@ def policy_search(query:str, top_k:int = 5) -> str:
     start = time.time()
     if not query or not query.strip():
         _last_status = "clarify"
-        return str(make_failure_response("clarify", "请提供查询关键词"))
+        return str(error_handler.make_failure_response("clarify", "请提供查询关键词"))
     
     engine = get_rag_engine()
     docs = engine.retrieve(query, top_k=top_k)
@@ -32,8 +34,8 @@ def policy_search(query:str, top_k:int = 5) -> str:
                if ("政策" in d["source"] or "管理" in d["source"])
                and d["score"] <= SCORE_THRESHOLD]
 
-    if is_empty_result(policy_docs):
-        log_tool_call(None, "policy_search", "empty", 0, latency, user_query=query)
+    if error_handler.is_empty_result(policy_docs):
+        error_handler.log_tool_call(None, "policy_search", "empty", 0, latency, user_query=query)
         # 降级到 vector_search，函数内 import 防循环
         from tools.vector_search import vector_search
         import tools.vector_search as vs_module   # ← 新加，为了拿 vector 的 citations
@@ -45,15 +47,15 @@ def policy_search(query:str, top_k:int = 5) -> str:
             # 降级后 vector 也失败
             _last_status = "degraded"
             _last_citations = []
-            log_tool_call(None, "policy_search", "degraded", 0, latency, user_query=query)
-            return str(make_failure_response(
+            error_handler.log_tool_call(None, "policy_search", "degraded", 0, latency, user_query=query)
+            return str(error_handler.make_failure_response(
                 "degraded", "未找到相关政策或通用信息，建议换关键词"))
 
         # 降级成功，citations 来自 vector
         _last_status = "fallback"
         _last_citations = vs_module._last_citations   # ← 关键：复制 vector 的 citations
-        log_tool_call(None, "policy_search", "fallback", 0, latency, user_query=query)
-        return str(make_failure_response(
+        error_handler.log_tool_call(None, "policy_search", "fallback", 0, latency, user_query=query)
+        return str(error_handler.make_failure_response(
             "fallback", "未找到政策条款，已切换通用检索",
             data=fallback[:200]))
 
@@ -63,6 +65,6 @@ def policy_search(query:str, top_k:int = 5) -> str:
          "score": d["score"], "tool": "policy_search"}
         for d in policy_docs[:3]
     ]
-    log_tool_call(None, "policy_search", "ok", 0, latency, user_query=query)
+    error_handler.log_tool_call(None, "policy_search", "ok", 0, latency, user_query=query)
     lines = [f"[{i}] 来源: {d['source']}\n{d['content']}\n" for i, d in enumerate(policy_docs, 1)]
     return "\n".join(lines)

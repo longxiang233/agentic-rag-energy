@@ -10,8 +10,10 @@ import tools.vector_search as vs_module
 import tools.policy_search as ps_module
 import tools.price_query as pq_module
 from tools.error_handler import set_current_session
+from typing import Any
 
-def build_agent():
+# 返回值是 LangGraph 图对象，如果不确定具体类名，直接标 Any 或省略，或者不写。但参数一定要标。
+def build_agent() -> Any:
     llm = ChatOpenAI(
         model=LLM_MODEL,
         temperature=0,

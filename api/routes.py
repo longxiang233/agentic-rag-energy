@@ -28,7 +28,7 @@ app = FastAPI(title="Agentic RAG 新能源政策助手")
 
 
 @app.post("/chat", response_model=ChatResponse)
-def chat(req: ChatRequest):
+def chat(req: ChatRequest) -> ChatResponse:
     try:
         result = chat_with_memory(req.session_id, req.message)
         return ChatResponse(**result)
