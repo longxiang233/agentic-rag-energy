@@ -18,6 +18,13 @@
 - **大模型**：智谱 GLM-4.7-flash (对话) + embedding-3 (向量化)
 - **测试**：pytest (11个端到端用例)
 
+### 🤖 进阶扩展：多智能体协作 Demo (Multi-Agent)
+
+在 `agent/multi_agent_demo.py` 中，实现了一个基于 LangGraph 的 Supervisor（主管）模式多智能体 Demo：
+1. **角色分工**：定义了 Writer（负责内容生成）与 Reviewer（负责质量审核）两个独立 Agent。
+2. **状态共享**：通过 `TypedDict` 维护全局 State（包含草稿、意见与重试次数）。
+3. **条件路由与防死循环**：基于 LangGraph 的条件边（Conditional Edges），实现了审核不通过自动打回重写；同时设计了 `revision >= 2` 的业务级防死循环机制。
+
 ## 🏗 架构图
 
 ```mermaid
