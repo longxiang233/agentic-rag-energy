@@ -1,6 +1,13 @@
 # Agentic RAG 新能源政策问答系统
 
-面向新能源（光伏、储能）企业政策研究员和市场分析师的 AI 助手。解决政策分散、检索不准、单轮问答无法追问的痛点，提供带出处（citations）的多轮问答、精准电价查询和失败降级能力。
+## 💡 项目背景与解决的痛点
+
+新能源（光伏、储能）行业的政策和电价机制更新非常频繁。以前业务员查个文件，得在几百页的 PDF 里翻半天，不仅容易漏看条款导致合规风险，单轮问答也根本问不清具体的补贴细节。
+
+基于这个真实的业务背景，我开发了这套系统，主要想解决三个实际问题：
+*   **查政策防踩坑**：把海量政策文件转化为秒级响应的智能知识库。最核心的是**强制要求大模型输出引用出处（Citations）**，防止它瞎编政策，把人工查文件的时间直接压缩到几秒钟。
+*   **算电价辅助决策**：储能赚钱主要靠峰谷套利。系统能精准提取和计算电价差，帮业务员找最优的充放电策略，而不是让大模型自己去做算术。
+*   **降本增效**：这套 RAG 架构不仅能查政策，也能无缝平移到偏远风光电站的“设备维修手册问答”上，相当于给现场工人配了个随身专家，省去了专家到处跑的差旅成本。
 
 ## 🚀 核心功能
 
@@ -20,10 +27,7 @@
 
 ### 🤖 进阶扩展：多智能体协作 Demo (Multi-Agent)
 
-在 `agent/multi_agent_demo.py` 中，实现了一个基于 LangGraph 的 Supervisor（主管）模式多智能体 Demo：
-1. **角色分工**：定义了 Writer（负责内容生成）与 Reviewer（负责质量审核）两个独立 Agent。
-2. **状态共享**：通过 `TypedDict` 维护全局 State（包含草稿、意见与重试次数）。
-3. **条件路由与防死循环**：基于 LangGraph 的条件边（Conditional Edges），实现了审核不通过自动打回重写；同时设计了 `revision >= 2` 的业务级防死循环机制。
+在 agent/multi_agent_demo.py 中，实现了一个基于 LangGraph 的 Supervisor（主管）模式多智能体 Demo。它定义了 Writer（生成）和 Reviewer（审核）两个独立 Agent，通过 TypedDict 共享全局状态。并且利用了条件边实现了“审核不通过自动打回重写”，为了防止两个 Agent 互相扯皮死循环，还专门设计了 revision >= 2 的强制退出机制。
 
 ## 🏗 架构图
 
@@ -63,7 +67,7 @@ ZAI_BASE_URL=https://open.bigmodel.cn/api/paas/v4/
 
 ### 3. 建库（首次运行）
 ```powershell
-python -m rag.build_index
+python -c "from rag.rag_engine import RAGEngine; e = RAGEngine(); e.build_vectorstore()"
 ```
 
 ### 4. 启动服务
